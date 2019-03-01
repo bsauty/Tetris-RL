@@ -121,7 +121,6 @@ def convert_shape_format(shape):
     # we correct the position with an offset (more accurate on screen)
     for i, pos in enumerate(positions):
         positions[i] = (pos[0] - 2, pos[1] - 4)
-    print(positions)
     return positions
 
 
@@ -258,7 +257,7 @@ def main(win,score):
     next_piece = get_shape()
     clock = pygame.time.Clock()
     fall_time = 0
-    fall_speed = 2
+    fall_speed = 1
     # we can even make shapes fall faster and faster
     #level_time = 0
 
@@ -276,9 +275,7 @@ def main(win,score):
             if fall_speed > 0.12:
                 fall_speed -= 0.004'''
 
-        # we move down the piece by one step after checking the input
-        if fall_time / 1000 >= fall_speed:
-            fall_time = 0
+        if fall_time / 1000 >= fall_speed/2:
 
             for event in pygame.event.get():
                 # end of the game
@@ -317,41 +314,44 @@ def main(win,score):
                         if not valid_space(current_piece, grid):
                             current_piece.y -= 1
 
+        if fall_time / 1000 > fall_speed :
+            fall_time = 0
+
             current_piece.y += 1
             if not (valid_space(current_piece, grid)):
                 current_piece.y -= 1
                 # if we can't move down the piece we go to the next piece
                 change_piece = True
 
-            shape_pos = convert_shape_format(current_piece)
+        shape_pos = convert_shape_format(current_piece)
 
-            # add piece to the grid for drawing
-            for i in range(len(shape_pos)):
-                x, y = shape_pos[i]
-                if y > -1:
-                    grid[y][x] = current_piece.color
+        # add piece to the grid for drawing
+        for i in range(len(shape_pos)):
+            x, y = shape_pos[i]
+            if y > -1:
+                grid[y][x] = current_piece.color
 
-            # the piece is at the bottom so we go to the next one
-            if change_piece:
-                for pos in shape_pos:
-                    p = (pos[0], pos[1])
-                    # we update position
-                    locked_positions[p] = current_piece.color
-                current_piece = next_piece
-                next_piece = get_shape()
-                change_piece = False
+        # the piece is at the bottom so we go to the next one
+        if change_piece:
+            for pos in shape_pos:
+                p = (pos[0], pos[1])
+                # we update position
+                locked_positions[p] = current_piece.color
+            current_piece = next_piece
+            next_piece = get_shape()
+            change_piece = False
 
-                # increment score with number of rows cleared at once
-                score += (clear_rows(grid, locked_positions)) ** 2 * 10
+            # increment score with number of rows cleared at once
+            score += (clear_rows(grid, locked_positions)) ** 2 * 10
 
-            draw_window(win, score)
-            draw_next_shape(next_piece, win)
-            pygame.display.update()
+        draw_window(win, score)
+        draw_next_shape(next_piece, win)
+        pygame.display.update()
 
-            # check if user lost
-            if check_lost(locked_positions):
-                run = False
-                print(score)
+        # check if user lost
+        if check_lost(locked_positions):
+            run = False
+            print(score)
 
     # lost message
     #draw_text_middle("You Lost", 40, (255, 255, 255), win)

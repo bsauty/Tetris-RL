@@ -5,7 +5,7 @@ from keras.models import Sequential
 from keras.layers import Dense
 
 
-from environment_reduced import m,n, locked_positions, inc, current_piece, play
+from environment_reduced import m,n, play
 
 
 
@@ -70,7 +70,7 @@ class clever_agent():
 
         self.model = Sequential()
         self.model.add(Dense(20, input_dim=self.input_size, init='uniform', activation='relu'))  # hidden layer after n+8 output
-        self.model.add(Dense(15, init='uniform', activation='relu'))  # hidden layer
+        #self.model.add(Dense(15, init='uniform', activation='relu'))  # hidden layer
         self.model.add(Dense(4, init='uniform', activation='linear'))  # 4 possible actions as output
 
 
@@ -79,10 +79,10 @@ class clever_agent():
 
         # Parameters
         self.epsilon = .9         # probability of doing a random move
-        self.epsilon_decay = 0.9999999
+        self.epsilon_decay = 1/500000
         self.epsilon_end = 0.05
 
-        self.gamma = 0.98       # discounted future reward
+        self.gamma = 0.95     # discounted future reward
 
         self.mini_batch = 100   # size of data we want to use for stochastic gradient descent
         self.last_events = []   # storing the mini_batch last actions
@@ -113,11 +113,11 @@ class clever_agent():
         for i in range(len(max_height)):
             state[i] = max_height[i]
         # then we store n 0-1 with a 1 in the corresponding x for the falling piece
-        state[n+abs(x)] = 1
+        state[6 + x] = 1
         # same for corresponding y of falling piece
-        state[2*n+abs(y)] = 1
+        state[12 + y] = 1
         # same for the index (ie. the shape+rotation state) of the falling piece
-        state[2*n+m+index] = 1
+        state[21 + index] = 1
 
         return state
 
@@ -168,9 +168,8 @@ class clever_agent():
                 #then we train the network to output the Q function
                 self.model.train_on_batch(inputs, targets)
 
-                if self.epsilon > self.epsilon_end:
-                    self.epsilon *= self.epsilon_decay
-
+            if self.epsilon > self.epsilon_end:
+                self.epsilon -= self.epsilon_decay
 
             self.last_events =[]
             self.iteration = 0
@@ -187,19 +186,13 @@ class clever_agent():
         for diff in height_diff :
             sum_diff += diff
             if diff > 2 :
-                self.reward -= 0.2*diff
-        if sum_diff < 5:
-            self.reward += 2
+                self.reward -= 0.01*diff
 
         from environment_reduced import inc
         self.reward += inc*inc*20
 
         # we will modify the done thing later
         done = False
-
-        print("state : " + str(state_new))
-        print("reward : " + str(self.reward))
-
         self.total_reward += self.reward
 
         self.last_events.append((self.state, i, self.reward, state_new, done))
@@ -215,7 +208,7 @@ class clever_agent():
         self.iteration = 0
 
         pygame.event.get = function_intercept(pygame.event.get, self.new_episode)
-        play(1)
+        play(250000)
         self.playing = True
 
     def stop(self):
@@ -228,5 +221,4 @@ class clever_agent():
 
 if __name__ == "__main__":
     player = clever_agent()
-    player.initialize_nn()
     player.start()
