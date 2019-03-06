@@ -1,5 +1,19 @@
+'''This is the reduced environment
+
+To play easy tetris, run play(1)
+
+
+It is highly modified compared to the full environment in order to be able to interact with the agent
+
+'''
+
+
+
+
+
 import pygame
 import random
+import os
 
 
 pygame.font.init()
@@ -137,6 +151,9 @@ def valid_space(shape, grid):
         if pos not in accepted_positions:
             if pos[1] > -1:
                 return False
+            else :
+                if not (pos[0] in [i for i in range(n)]):
+                    return False
 
     return True
 
@@ -145,7 +162,7 @@ def valid_space(shape, grid):
 def check_lost(positions):
     for pos in positions:
         x, y = pos
-        if y < 0:
+        if y < 1:
             return True
     return False
 
@@ -275,7 +292,7 @@ def main(win,score):
             if fall_speed > 0.12:
                 fall_speed -= 0.004'''
 
-        if fall_time / 1000 >= fall_speed/2:
+        if fall_time / 1000 >= fall_speed/3:
 
             for event in pygame.event.get():
                 # end of the game
@@ -351,9 +368,11 @@ def main(win,score):
         # check if user lost
         if check_lost(locked_positions):
             run = False
+            scores = open("scores.txt", "a")
+            scores.write(str(score)+"\n")
             print(score)
 
-    # lost message
+    # lost message disabled to gain time when training with agent
     #draw_text_middle("You Lost", 40, (255, 255, 255), win)
     #pygame.display.update()
     #pygame.time.delay(100)
@@ -363,10 +382,13 @@ def main(win,score):
 def play(n=100):
     run = True
     i = 0
+    if os.path.isfile("scores.txt"):
+        os.remove("scores.txt")
+
     while run and i<n:
         # initiate the pygame display
         win = pygame.display.set_mode((s_width, s_height))
-        pygame.display.set_caption('Tetris')
+        pygame.display.set_caption('Tetris - RL Project')
 
         # start game
         run = main(win,score)
@@ -376,7 +398,6 @@ def play(n=100):
         print(str(i))
 
     return
-
 
 
 

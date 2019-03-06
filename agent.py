@@ -1,4 +1,13 @@
-from pygame.constants import K_UP, K_LEFT, K_RIGHT, K_SPACE, K_DOWN
+'''This is the intelligent agent
+
+For now it can only interact with the reduced environment.
+To initate training, simply run it
+Do not hesitate to mess with the hyperparameters (epsilon, minibatch, network architecture, etc)
+'''
+
+
+
+from pygame.constants import K_UP, K_LEFT, K_RIGHT, K_DOWN
 import numpy as np
 import pygame
 from keras.models import Sequential
@@ -38,7 +47,7 @@ def function_intercept(intercepted_func, intercepting_func):
 class random_agent():
 
     def __init__(self):
-        self.score = score
+        self.score = score ge
 
     def start(self):
         pygame.event.get = function_intercept(pygame.event.get, self.test)
@@ -57,8 +66,6 @@ class random_agent():
         return([])'''
 
 
-
-
 class clever_agent():
 
     def __init__(self):
@@ -70,17 +77,17 @@ class clever_agent():
 
         self.model = Sequential()
         self.model.add(Dense(20, input_dim=self.input_size, init='uniform', activation='relu'))  # hidden layer after n+8 output
-        #self.model.add(Dense(15, init='uniform', activation='relu'))  # hidden layer
+        self.model.add(Dense(15, init='uniform', activation='relu'))  # hidden layer
         self.model.add(Dense(4, init='uniform', activation='linear'))  # 4 possible actions as output
 
-
-        self.model.compile(loss='mse', optimizer='SGD', metrics=['accuracy'])
+        #here either use adam or stochastic gradient descent optimizer
+        self.model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
 
 
         # Parameters
         self.epsilon = .9         # probability of doing a random move
         self.epsilon_decay = 1/500000
-        self.epsilon_end = 0.05
+        self.epsilon_end = 0.15
 
         self.gamma = 0.95     # discounted future reward
 
@@ -105,7 +112,14 @@ class clever_agent():
         from environment_reduced import current_piece
         falling_piece = current_piece.info_shape()
         x,y,index = falling_piece
-
+        if x <= 0 :
+            x = 0
+        if x >= 5 :
+            x = 5
+        if y <= 0 :
+            y = 0
+        if y >= 9 :
+            y = 0
         # here we put the state in the required shape :
         # array([height1,..., heightn, x_piece, y_piece, index_piece]) en mettant les trois derniers sous forme 0-1
         state = np.zeros(self.input_size)
@@ -170,6 +184,7 @@ class clever_agent():
 
             if self.epsilon > self.epsilon_end:
                 self.epsilon -= self.epsilon_decay
+                print(self.epsilon)
 
             self.last_events =[]
             self.iteration = 0
@@ -186,7 +201,7 @@ class clever_agent():
         for diff in height_diff :
             sum_diff += diff
             if diff > 2 :
-                self.reward -= 0.01*diff
+                self.reward -= 0.1*diff
 
         from environment_reduced import inc
         self.reward += inc*inc*20
@@ -208,17 +223,16 @@ class clever_agent():
         self.iteration = 0
 
         pygame.event.get = function_intercept(pygame.event.get, self.new_episode)
+        # specify as an argument the number of games we want to train on
         play(250000)
         self.playing = True
 
     def stop(self):
-        pygame.event.get = self._default_event_get
         self.playing = False
-
-
-
 
 
 if __name__ == "__main__":
     player = clever_agent()
     player.start()
+
+

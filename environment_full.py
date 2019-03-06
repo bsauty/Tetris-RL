@@ -1,3 +1,16 @@
+'''This is the full environment
+
+To play tetris, run it alone
+
+It is not designed to interact with the agent since we focused on making the reduced environment
+interactive and not this one (way to big to train).
+
+'''
+
+
+
+
+
 import pygame
 import random
 
@@ -410,35 +423,10 @@ def main(win, score = 0):
     pygame.time.delay(2000)
 
 
-''' a bit useless
-def main_menu():
-    run = True
-    while run:
-        win.fill((0, 0, 0))
-        draw_text_middle('Press any key to begin.', 60, (255, 255, 255), win)
-        pygame.display.update()
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
-
-            if event.type == pygame.KEYDOWN:
-                main(win)
-    pygame.quit()
-
-
-# initiate the pygame display
-win = pygame.display.set_mode((s_width, s_height))
-pygame.display.set_caption('Tetris')
-
-# start game
-main_menu()'''
-
-
 def play():
     # initiate the pygame display
     win = pygame.display.set_mode((s_width, s_height))
-    pygame.display.set_caption('Tetris')
-
+    pygame.display.set_caption('Tetris - RL project')
 
     # start game
     main(win,score)
