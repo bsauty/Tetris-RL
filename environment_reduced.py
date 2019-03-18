@@ -183,7 +183,6 @@ def draw_text_middle(text, size, color, surface):
 # we clear all completed lines
 def clear_rows(grid, locked):
     # need to see if row is clear the shift every other row above down one
-    global inc
     inc = 0
     # we check all rows beginning from the bottom
     for i in range(len(grid) - 1, -1, -1):
@@ -205,7 +204,7 @@ def clear_rows(grid, locked):
             if y < ind:
                 newKey = (x, y + inc)
                 locked[newKey] = locked.pop(key)
-    return (inc)
+    return inc
 
 
 # used to fraw the next shape that will come out on the side of the window
@@ -262,6 +261,9 @@ def draw_window(surface, score=0):
 
 def main(win,score):
     global grid
+    global inc
+    global once
+    once = False
 
     grid = create_grid(locked_positions)
 
@@ -274,7 +276,7 @@ def main(win,score):
     next_piece = get_shape()
     clock = pygame.time.Clock()
     fall_time = 0
-    fall_speed = 1
+    fall_speed = 0.01
     # we can even make shapes fall faster and faster
     #level_time = 0
 
@@ -286,15 +288,24 @@ def main(win,score):
         #level_time += clock.get_rawtime()
         clock.tick()
 
+
+
         # every 7 seconds we speed up things
         '''if level_time / 1000 > 7:
             level_time = 0
             if fall_speed > 0.12:
                 fall_speed -= 0.004'''
 
-        if fall_time / 1000 >= fall_speed/3:
+        if fall_time / 1000 >= fall_speed :
 
             for event in pygame.event.get():
+
+                if not (once):
+                    inc = 0
+                else :
+                    once = False
+                    inc = 0
+
                 # end of the game
                 if event.type == pygame.QUIT:
                     run = False
@@ -331,6 +342,12 @@ def main(win,score):
                         if not valid_space(current_piece, grid):
                             current_piece.y -= 1
 
+                    elif event.key == pygame.K_SPACE:
+                        # move shape at the bottom
+                        while valid_space(current_piece, grid):
+                            current_piece.y += 1
+                        current_piece.y -= 1
+
         if fall_time / 1000 > fall_speed :
             fall_time = 0
 
@@ -359,7 +376,9 @@ def main(win,score):
             change_piece = False
 
             # increment score with number of rows cleared at once
-            score += (clear_rows(grid, locked_positions)) ** 2 * 10
+            inc = clear_rows(grid, locked_positions)
+            once = True
+            score += inc ** 2 * 10
 
         draw_window(win, score)
         draw_next_shape(next_piece, win)

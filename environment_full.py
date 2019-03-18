@@ -13,6 +13,7 @@ interactive and not this one (way to big to train).
 
 import pygame
 import random
+import os
 
 """
 10 x 20 square grid
@@ -32,7 +33,7 @@ play_width = 300  # meaning 300 // 10 = 30 width per block
 play_height = 600  # meaning 600 // 20 = 20 height per blo ck
 block_size = 30
 score = 0
-
+global current_piece
 
 top_left_x = (s_width - play_width) // 2
 top_left_y = s_height - play_height
@@ -206,6 +207,9 @@ def valid_space(shape, grid):
         if pos not in accepted_positions:
             if pos[1] > -1:
                 return False
+            else :
+                if not (pos[0] in [i for i in range(n)]):
+                    return False
 
     return True
 
@@ -221,7 +225,7 @@ def check_lost(positions):
 
 # get the next shape that will appear
 def get_shape():
-    return Piece(5, 0, random.choice(shapes))
+    return Piece(5, 1, random.choice(shapes))
 
 
 def draw_text_middle(text, size, color, surface):
@@ -230,6 +234,7 @@ def draw_text_middle(text, size, color, surface):
 
     surface.blit(label, (
     top_left_x + play_width / 2 - (label.get_width() / 2), top_left_y + play_height / 2 - label.get_height() / 2))
+
 
 
 # we clear all completed lines
@@ -253,10 +258,11 @@ def clear_rows(grid, locked):
     if inc > 0:
         for key in sorted(list(locked), key=lambda x: x[1])[::-1]:
             x, y = key
-            if y < ind:
+            if y <= ind:
                 newKey = (x, y + inc)
                 locked[newKey] = locked.pop(key)
-    return (inc)
+    return inc
+
 
 
 # used to fraw the next shape that will come out on the side of the window
@@ -313,17 +319,19 @@ def draw_window(surface, score=0):
 
 def main(win, score = 0):
     global grid
+    global inc
 
     grid = create_grid(locked_positions)
 
     # we initialize the game
     change_piece = False
     run = True
+    global current_piece
     current_piece = get_shape()
     next_piece = get_shape()
     clock = pygame.time.Clock()
     fall_time = 0
-    fall_speed = 0.27
+    fall_speed = 0.01
     # we can even make shapes fall faster and faster
     level_time = 0
     score = 0
@@ -336,57 +344,61 @@ def main(win, score = 0):
         level_time += clock.get_rawtime()
         clock.tick()
 
-        # every 7 seconds we speed up things
+        ''''# every 7 seconds we speed up things
         if level_time / 1000 > 5:
             level_time = 0
             if fall_speed > 0.12:
-                fall_speed -= 0.008
+                fall_speed -= 0.008'''
 
-        # we move down the piece by one step
         if fall_time / 1000 >= fall_speed:
+
+            for event in pygame.event.get():
+                # end of the game
+                if event.type == pygame.QUIT:
+                    run = False
+                    pygame.display.quit()
+                    quit()
+
+                # user input, 4 possible keys
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        current_piece.x -= 1
+                        # not go out of the grid
+                        if not valid_space(current_piece, grid):
+                            current_piece.x += 1
+
+                    elif event.key == pygame.K_RIGHT:
+                        current_piece.x += 1
+                        if not valid_space(current_piece, grid):
+                            current_piece.x -= 1
+
+                    elif event.key == pygame.K_UP:
+                        # rotate shape, add a modulo to get cyclic rotations
+                        current_piece.rotation = current_piece.rotation + 1 % len(current_piece.shape)
+                        if not valid_space(current_piece, grid):
+                            current_piece.rotation = current_piece.rotation - 1 % len(current_piece.shape)
+
+                    if event.key == pygame.K_DOWN:
+                        # move shape down
+                        current_piece.y += 1
+                        if not valid_space(current_piece, grid):
+                            current_piece.y -= 1
+
+                    if event.key == pygame.K_SPACE:
+                        # move shape at the bottom
+                        while valid_space(current_piece, grid):
+                            current_piece.y += 1
+                        current_piece.y -= 1
+
+        if fall_time / 1000 > fall_speed:
             fall_time = 0
-            current_piece.y += 1
+
+            while valid_space(current_piece, grid):
+                current_piece.y += 1
             if not (valid_space(current_piece, grid)) and current_piece.y > 0:
                 current_piece.y -= 1
                 # if we can't move down the piece we go to the next piece
                 change_piece = True
-
-        for event in pygame.event.get():
-            # end of the game
-            if event.type == pygame.QUIT:
-                run = False
-                pygame.display.quit()
-                quit()
-
-            # user input, 4 possible keys
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    current_piece.x -= 1
-                    # not go out of the grid
-                    if not valid_space(current_piece, grid):
-                        current_piece.x += 1
-
-                elif event.key == pygame.K_RIGHT:
-                    current_piece.x += 1
-                    if not valid_space(current_piece, grid):
-                        current_piece.x -= 1
-                elif event.key == pygame.K_UP:
-                    # rotate shape, add a modulo to get cyclic rotations
-                    current_piece.rotation = current_piece.rotation + 1 % len(current_piece.shape)
-                    if not valid_space(current_piece, grid):
-                        current_piece.rotation = current_piece.rotation - 1 % len(current_piece.shape)
-
-                if event.key == pygame.K_DOWN:
-                    # move shape down
-                    current_piece.y += 1
-                    if not valid_space(current_piece, grid):
-                        current_piece.y -= 1
-
-                if event.key == pygame.K_SPACE:
-                    # move shape at the bottom
-                    while valid_space(current_piece, grid):
-                        current_piece.y += 1
-                    current_piece.y -= 1
 
         shape_pos = convert_shape_format(current_piece)
 
@@ -416,19 +428,38 @@ def main(win, score = 0):
         # check if user lost
         if check_lost(locked_positions):
             run = False
+            scores = open("scores.txt", "a")
+            scores.write(str(score) + "\n")
+            #print(score)
 
     # lost message
-    draw_text_middle("You Lost", 40, (255, 255, 255), win)
-    pygame.display.update()
-    pygame.time.delay(2000)
+    #draw_text_middle("You Lost", 40, (255, 255, 255), win)
+    #pygame.display.update()
+    #pygame.time.delay(20)
 
 
-def play():
-    # initiate the pygame display
-    win = pygame.display.set_mode((s_width, s_height))
-    pygame.display.set_caption('Tetris - RL project')
+def play(n=100):
+    run = True
+    i = 0
+    if os.path.isfile("scores.txt"):
+        os.remove("scores.txt")
 
-    # start game
-    main(win,score)
+    while i < n:
+        # initiate the pygame display
+        win = pygame.display.set_mode((s_width, s_height))
+        pygame.display.set_caption('Tetris - RL Project')
 
-play()
+        # start game
+        run = main(win, score)
+        global locked_positions
+        locked_positions = {}
+        i += 1
+        #print(str(i))
+
+    return
+
+current_piece = get_shape()
+inc = 0
+
+
+#play(1)
