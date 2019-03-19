@@ -2,6 +2,12 @@
 
 Just run to initiate training.
 Feel free to mess with the hyperparameters to compare convergence speed (epsilon, gamma, alpha)
+
+
+
+
+/!\/!\ : There is an occasionnal bug when clearing lines that happens when using the agent but not when playing manually
+
 '''
 
 
